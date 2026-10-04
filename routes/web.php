@@ -36,6 +36,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('reports', Report::class)->only(['index']);
     Route::get('/pos', [POS::class, 'index'])->name('pos.index');
     Route::post('/pos', [POS::class, 'store'])->name('pos.store');
+    Route::post('/pos/complete', [POS::class, 'complete'])->name('pos.complete');
+    Route::patch('/pos/{product}', [POS::class, 'update'])->name('pos.update');
+    Route::delete('/pos/{product}', [POS::class, 'remove'])->name('pos.remove');
+    Route::delete('/pos', [POS::class, 'clear'])->name('pos.clear');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

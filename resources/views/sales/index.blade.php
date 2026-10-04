@@ -11,6 +11,7 @@
                         <th class="px-4 py-3 text-left">Invoice</th>
                         <th class="px-4 py-3 text-left">Date</th>
                         <th class="px-4 py-3 text-left">Cashier</th>
+                        <th class="px-4 py-3 text-left">Member</th>
                         <th class="px-4 py-3 text-left">Total</th>
                         <th class="px-4 py-3 text-left">Status</th>
                     </tr>
@@ -21,6 +22,7 @@
                             <td class="px-4 py-3">{{ $sale->invoice_number ?? 'N/A' }}</td>
                             <td class="px-4 py-3">{{ $sale->created_at->format('d M Y') }}</td>
                             <td class="px-4 py-3">{{ $sale->user?->name ?? 'N/A' }}</td>
+                            <td class="px-4 py-3">{{ $sale->member?->member_number ?? 'N/A' }}</td>
                             <td class="px-4 py-3">৳ {{ number_format($sale->grand_total ?? 0, 2) }}</td>
                             <td class="px-4 py-3">{{ $sale->status }}</td>
                         </tr>
