@@ -20,6 +20,17 @@ class Purchase extends Model
         'paid',
         'due',
         'status',
+        'notes',
+    ];
+
+    protected $casts = [
+        'date' => 'date',
+        'subtotal' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
+        'tax_amount' => 'decimal:2',
+        'total' => 'decimal:2',
+        'paid' => 'decimal:2',
+        'due' => 'decimal:2',
     ];
 
     public function supplier(): BelongsTo
@@ -35,5 +46,10 @@ class Purchase extends Model
     public function items(): HasMany
     {
         return $this->hasMany(PurchaseItem::class);
+    }
+
+    public function returns(): HasMany
+    {
+        return $this->hasMany(PurchaseReturn::class);
     }
 }

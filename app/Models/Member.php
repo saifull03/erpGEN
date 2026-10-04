@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Member extends Model
 {
@@ -25,6 +26,14 @@ class Member extends Model
         'status',
     ];
 
+    protected $casts = [
+        'points' => 'integer',
+        'total_purchase_amount' => 'decimal:2',
+        'total_transactions' => 'integer',
+        'join_date' => 'date',
+        'expiry_date' => 'date',
+    ];
+
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
@@ -33,5 +42,15 @@ class Member extends Model
     public function membershipType(): BelongsTo
     {
         return $this->belongsTo(MembershipType::class);
+    }
+
+    public function sales(): HasMany
+    {
+        return $this->hasMany(Sale::class);
+    }
+
+    public function pointLogs(): HasMany
+    {
+        return $this->hasMany(MembershipPointLog::class);
     }
 }

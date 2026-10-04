@@ -3,28 +3,97 @@
 namespace App\Http\Controllers;
 
 use App\Models\Sale as SaleModel;
+use App\Services\ReturnService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class Sale extends Controller
 {
-    public function index()
+    protected ReturnService $returnService;
+
+    public function __construct(ReturnService $returnService)
     {
-        return view('sales.index', ['sales' => SaleModel::query()->with(['customer', 'member', 'user'])->latest()->paginate(20)]);
+        $this->returnService = $returnService;
     }
 
-    public function store(Request $request)
+    public function index(Request $request)
     {
-        $validated = $request->validate([
-            'invoice_number' => ['required', 'string', 'max:50', 'unique:sales,invoice_number'],
-            'grand_total' => ['required', 'numeric', 'min:0'],
-            'paid_amount' => ['required', 'numeric', 'min:0'],
+        $query = SaleModel::query()->with(['customer', 'member', 'user']);
+
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('invoice_number', 'like', "%{$search}%")
+                  ->orWhereHas('customer', fn ($cq) => $cq->where('name', 'like', "%{$search}%")->orWhere('phone', 'like', "%{$search}%"))
+                  ->orWhereHas('member', fn ($mq) => $mq->where('member_number', 'like', "%{$search}%")->orWhere('name', 'like', "%{$search}%"));
+            });
+        }
+
+        if ($startDate = $request->input('start_date')) {
+            $query->whereDate('created_at', '>=', $startDate);
+        }
+
+        if ($endDate = $request->input('end_date')) {
+            $query->whereDate('created_at', '<=', $endDate);
+        }
+
+        if ($status = $request->input('status')) {
+            $query->where('status', $status);
+        }
+
+        $sales = $query->latest()->paginate(20)->withQueryString();
+
+        return view('sales.index', [
+            'sales' => $sales,
+        ]);
+    }
+
+    public function show(SaleModel $sale)
+    {
+        $sale->load(['items.product', 'customer', 'member.membershipType', 'user', 'payments', 'returns.items.product']);
+
+        return view('sales.show', [
+            'sale' => $sale,
+        ]);
+    }
+
+    public function thermal(SaleModel $sale)
+    {
+        $sale->load(['items.product', 'customer', 'member.membershipType', 'user', 'payments']);
+
+        return view('sales.thermal', [
+            'sale' => $sale,
+        ]);
+    }
+
+    public function invoice(SaleModel $sale)
+    {
+        $sale->load(['items.product', 'customer', 'member.membershipType', 'user', 'payments']);
+
+        return view('sales.invoice', [
+            'sale' => $sale,
+        ]);
+    }
+
+    public function processReturn(Request $request, SaleModel $sale)
+    {
+        $data = $request->validate([
+            'items' => ['required', 'array'],
+            'payment_method' => ['required', 'string'],
+            'reason' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $validated['due_amount'] = max(0, $validated['grand_total'] - $validated['paid_amount']);
-        $validated['user_id'] = auth()->id();
+        try {
+            $saleReturn = $this->returnService->processSaleReturn(
+                $sale,
+                $data['items'],
+                $data['payment_method'],
+                $data['reason'],
+                $request->user()
+            );
 
-        SaleModel::query()->create($validated);
-
-        return redirect()->route('sales.index')->with('success', 'Sale recorded.');
+            return redirect()->route('sales.show', $sale)->with('success', "Sale Return #{$saleReturn->return_number} processed successfully. Refund: ৳ " . number_format($saleReturn->total_refund, 2));
+        } catch (ValidationException $e) {
+            return back()->withErrors($e->errors())->withInput();
+        }
     }
 }

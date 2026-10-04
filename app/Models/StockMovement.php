@@ -7,7 +7,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class StockMovement extends Model
 {
-    protected $fillable = ['product_id', 'type', 'quantity', 'previous_stock', 'new_stock', 'reference', 'user_id'];
+    protected $fillable = [
+        'product_id',
+        'type',
+        'quantity',
+        'previous_stock',
+        'new_stock',
+        'reference',
+        'user_id',
+        'notes',
+    ];
 
     public function product(): BelongsTo
     {

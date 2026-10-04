@@ -5,9 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Product extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'sku',
         'barcode',
@@ -30,6 +33,17 @@ class Product extends Model
         'description',
     ];
 
+    protected $casts = [
+        'purchase_price' => 'decimal:2',
+        'selling_price' => 'decimal:2',
+        'wholesale_price' => 'decimal:2',
+        'discount_price' => 'decimal:2',
+        'tax_rate' => 'decimal:2',
+        'minimum_stock' => 'integer',
+        'current_stock' => 'integer',
+        'expiry_date' => 'date',
+    ];
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
@@ -50,8 +64,33 @@ class Product extends Model
         return $this->hasMany(StockMovement::class);
     }
 
+    public function priceHistories(): HasMany
+    {
+        return $this->hasMany(ProductPriceHistory::class);
+    }
+
     public function saleItems(): HasMany
     {
         return $this->hasMany(SaleItem::class);
+    }
+
+    public function purchaseItems(): HasMany
+    {
+        return $this->hasMany(PurchaseItem::class);
+    }
+
+    public function isLowStock(): bool
+    {
+        return $this->current_stock > 0 && $this->current_stock <= $this->minimum_stock;
+    }
+
+    public function isOutOfStock(): bool
+    {
+        return $this->current_stock <= 0;
+    }
+
+    public function isExpired(): bool
+    {
+        return $this->expiry_date && $this->expiry_date->isPast();
     }
 }

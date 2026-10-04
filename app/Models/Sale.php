@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Sale extends Model
 {
@@ -13,13 +14,29 @@ class Sale extends Model
         'user_id',
         'customer_id',
         'member_id',
+        'shift_id',
         'subtotal',
         'discount_amount',
+        'invoice_discount',
         'tax_amount',
         'grand_total',
         'paid_amount',
         'due_amount',
+        'change_amount',
+        'payment_method',
         'status',
+        'notes',
+    ];
+
+    protected $casts = [
+        'subtotal' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
+        'invoice_discount' => 'decimal:2',
+        'tax_amount' => 'decimal:2',
+        'grand_total' => 'decimal:2',
+        'paid_amount' => 'decimal:2',
+        'due_amount' => 'decimal:2',
+        'change_amount' => 'decimal:2',
     ];
 
     public function user(): BelongsTo
@@ -37,8 +54,23 @@ class Sale extends Model
         return $this->belongsTo(Member::class);
     }
 
+    public function shift(): BelongsTo
+    {
+        return $this->belongsTo(CashRegister::class, 'shift_id');
+    }
+
     public function items(): HasMany
     {
         return $this->hasMany(SaleItem::class);
+    }
+
+    public function payments(): MorphMany
+    {
+        return $this->morphMany(Payment::class, 'payable');
+    }
+
+    public function returns(): HasMany
+    {
+        return $this->hasMany(SaleReturn::class);
     }
 }
