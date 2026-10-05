@@ -92,7 +92,30 @@ class SaleService
             }
 
             $invoiceDiscount = isset($data['invoice_discount']) ? max(0, (float) $data['invoice_discount']) : 0;
-            $totalDiscount = min($subtotal, round($membershipDiscount + $invoiceDiscount, 2));
+
+            // Loyalty Points Redemption (e.g. 100 points = ৳150 discount)
+            $pointsRedeemed = 0;
+            $pointsDiscount = 0;
+            if ($member && !empty($data['points_redeemed'])) {
+                $requestedPoints = (int) $data['points_redeemed'];
+                if ($requestedPoints > 0) {
+                    if ($requestedPoints > $member->points) {
+                        throw ValidationException::withMessages([
+                            'points_redeemed' => "Member only has {$member->points} loyalty points available (requested: {$requestedPoints}).",
+                        ]);
+                    }
+
+                    $discountPerHundred = (float) (\App\Models\Setting::query()->where('key', 'loyalty_discount_per_hundred_points')->value('value') ?? 150);
+                    $calculatedPointsDiscount = round(($requestedPoints / 100) * $discountPerHundred, 2);
+
+                    // Ensure points discount doesn't exceed remaining bill after member tier discount
+                    $remainingSubtotal = max(0, $subtotal - $membershipDiscount - $invoiceDiscount);
+                    $pointsDiscount = min($remainingSubtotal, $calculatedPointsDiscount);
+                    $pointsRedeemed = $requestedPoints;
+                }
+            }
+
+            $totalDiscount = min($subtotal, round($membershipDiscount + $invoiceDiscount + $pointsDiscount, 2));
 
             $taxRate = isset($data['tax_rate']) ? (float) $data['tax_rate'] : 0; // standard 0 or percentage
             $taxAmount = round((($subtotal - $totalDiscount) * $taxRate) / 100, 2);
@@ -140,6 +163,8 @@ class SaleService
                 'subtotal' => $subtotal,
                 'discount_amount' => $totalDiscount,
                 'invoice_discount' => $invoiceDiscount,
+                'points_redeemed' => $pointsRedeemed,
+                'points_discount' => $pointsDiscount,
                 'tax_amount' => $taxAmount,
                 'grand_total' => $grandTotal,
                 'paid_amount' => $effectivePaid,
@@ -149,6 +174,19 @@ class SaleService
                 'status' => $dueAmount == 0 ? 'completed' : 'partial',
                 'notes' => $data['notes'] ?? null,
             ]);
+
+            // Deduct redeemed points from Member balance
+            if ($member && $pointsRedeemed > 0) {
+                $member->decrement('points', $pointsRedeemed);
+
+                $member->pointLogs()->create([
+                    'type' => 'redeemed',
+                    'points' => -$pointsRedeemed,
+                    'reference' => $sale->invoice_number,
+                    'notes' => "Redeemed {$pointsRedeemed} loyalty points for ৳{$pointsDiscount} discount on invoice #{$sale->invoice_number}",
+                    'user_id' => $cashier->id,
+                ]);
+            }
 
             // 6. Create Sale Items, Deduct Stock, and Record Stock Movements
             foreach ($lineItems as $item) {

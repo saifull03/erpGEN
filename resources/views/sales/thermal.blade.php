@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Receipt #{{ $sale->invoice_number }} - OneStop POS</title>
+    <title>Receipt #{{ $sale->invoice_number }} - erpGEN POS</title>
     <style>
         @page {
             margin: 0;
@@ -83,7 +83,7 @@
 
     <!-- Store Header -->
     <div class="text-center">
-        <div class="bold" style="font-size: 17px; letter-spacing: 0.5px;">ONESTOP SUPERMARKET</div>
+        <div class="bold" style="font-size: 17px; letter-spacing: 0.5px;">ERPGEN SUPERMARKET</div>
         <div>{{ \App\Models\Setting::where('key', 'store_address')->value('value') ?? 'House #12, Road #5, Dhanmondi, Dhaka' }}</div>
         <div>Hotline: {{ \App\Models\Setting::where('key', 'store_phone')->value('value') ?? '+880 1700-000000' }}</div>
         <div>BIN / VAT Reg: {{ \App\Models\Setting::where('key', 'store_bin')->value('value') ?? 'BIN-123456789-001' }}</div>
@@ -148,10 +148,16 @@
             <td class="text-left">Item Subtotal:</td>
             <td class="text-right">৳ {{ number_format($sale->subtotal, 2) }}</td>
         </tr>
-        @if ($sale->discount_amount > 0)
+        @if ($sale->points_discount > 0)
             <tr>
-                <td class="text-left">Special Discount:</td>
-                <td class="text-right">- ৳ {{ number_format($sale->discount_amount, 2) }}</td>
+                <td class="text-left">Points Discount ({{ $sale->points_redeemed }} pts):</td>
+                <td class="text-right">- ৳ {{ number_format($sale->points_discount, 2) }}</td>
+            </tr>
+        @endif
+        @if ($sale->discount_amount > $sale->points_discount)
+            <tr>
+                <td class="text-left">Store/Tier Discount:</td>
+                <td class="text-right">- ৳ {{ number_format($sale->discount_amount - $sale->points_discount, 2) }}</td>
             </tr>
         @endif
         @if ($sale->tax_amount > 0)
@@ -186,12 +192,12 @@
 
     <!-- Footer & Return Policy -->
     <div class="text-center" style="font-size: 10.5px;">
-        <p class="bold">{{ \App\Models\Setting::where('key', 'receipt_footer')->value('value') ?? 'THANK YOU FOR SHOPPING AT ONESTOP!' }}</p>
+        <p class="bold">{{ \App\Models\Setting::where('key', 'receipt_footer')->value('value') ?? 'THANK YOU FOR SHOPPING AT ERPGEN!' }}</p>
         <p style="margin-top: 3px;">Items can be returned/exchanged within 7 days with original receipt and intact barcode tags.</p>
         <div style="margin-top: 6px; font-family: monospace; letter-spacing: 2px;" class="bold">
             * {{ $sale->invoice_number }} *
         </div>
-        <p style="margin-top: 4px; font-size: 9.5px; color: #444;">OneStop Supermarket ERP & POS</p>
+        <p style="margin-top: 4px; font-size: 9.5px; color: #444;">erpGEN Supermarket ERP & POS</p>
     </div>
 
     <script>

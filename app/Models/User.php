@@ -70,6 +70,21 @@ class User extends Authenticatable
         return $this->role?->slug === 'super-admin';
     }
 
+    public function isAdmin(): bool
+    {
+        return $this->isSuperAdmin() || $this->role?->slug === 'admin';
+    }
+
+    public function isManager(): bool
+    {
+        return $this->isSuperAdmin() || in_array($this->role?->slug, ['admin', 'manager', 'branch-manager'], true);
+    }
+
+    public function isCashier(): bool
+    {
+        return $this->role?->slug === 'cashier';
+    }
+
     public function hasRole(string|array $roles): bool
     {
         if ($this->isSuperAdmin()) {

@@ -37,7 +37,7 @@
 
         <div>
             <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Branch Manager Email (Optional)</label>
-            <input type="email" name="manager_email" placeholder="manager@onestop.local" class="w-full text-sm border-gray-300 rounded-xl focus:border-indigo-500 focus:ring-indigo-500 shadow-xs">
+            <input type="email" name="manager_email" placeholder="manager@erpgen.local" class="w-full text-sm border-gray-300 rounded-xl focus:border-indigo-500 focus:ring-indigo-500 shadow-xs">
             <p class="text-[10px] text-gray-400 mt-0.5">Leave blank to match any active manager in {{ $branch?->name ?? 'this branch' }}.</p>
         </div>
 

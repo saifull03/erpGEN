@@ -21,7 +21,7 @@
         <div class="grid grid-cols-2 gap-3">
             @for ($i = 0; $i < 6; $i++)
                 <div class="bg-white border border-gray-400 p-3 rounded text-center flex flex-col items-center justify-center">
-                    <span class="text-[10px] font-black uppercase tracking-wider text-gray-800">OneStop Supermarket</span>
+                    <span class="text-[10px] font-black uppercase tracking-wider text-indigo-700">erpGEN Supermarket</span>
                     <span class="text-xs font-bold text-gray-900 mt-1 truncate w-full">{{ $product->name }}</span>
                     
                     <!-- SVG Barcode visual -->

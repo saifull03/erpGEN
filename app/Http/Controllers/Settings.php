@@ -27,6 +27,7 @@ class Settings extends Controller
             'tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'invoice_prefix' => ['nullable', 'string', 'max:20'],
             'loyalty_points_per_hundred' => ['nullable', 'integer', 'min:0'],
+            'loyalty_discount_per_hundred_points' => ['nullable', 'numeric', 'min:0'],
             'low_stock_threshold' => ['nullable', 'integer', 'min:1'],
             'receipt_footer' => ['nullable', 'string', 'max:500'],
         ]);
@@ -37,6 +38,6 @@ class Settings extends Controller
 
         AuditService::log('update_settings', 'Settings', null, null, $validated);
 
-        return redirect()->route('settings.index')->with('success', 'OneStop supermarket system settings updated successfully.');
+        return redirect()->route('settings.index')->with('success', 'erpGEN supermarket system settings updated successfully.');
     }
 }

@@ -2,16 +2,16 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Invoice #{{ $sale->invoice_number }} - OneStop</title>
+    <title>Invoice #{{ $sale->invoice_number }} - erpGEN</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 text-gray-900 p-8">
     <div class="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow border border-gray-200">
         <div class="flex justify-between items-start pb-6 border-b border-gray-200">
             <div>
-                <h1 class="text-3xl font-black text-indigo-700">OneStop Supermarket</h1>
+                <h1 class="text-3xl font-black text-indigo-700">erpGEN Supermarket</h1>
                 <p class="text-sm text-gray-500 mt-1">{{ \App\Models\Setting::where('key', 'store_address')->value('value') ?? 'Dhanmondi, Dhaka, Bangladesh' }}</p>
-                <p class="text-sm text-gray-500">Phone: {{ \App\Models\Setting::where('key', 'store_phone')->value('value') ?? '+880 1700-000000' }} | Email: {{ \App\Models\Setting::where('key', 'store_email')->value('value') ?? 'contact@onestop.local' }}</p>
+                <p class="text-sm text-gray-500">Phone: {{ \App\Models\Setting::where('key', 'store_phone')->value('value') ?? '+880 1700-000000' }} | Email: {{ \App\Models\Setting::where('key', 'store_email')->value('value') ?? 'contact@erpgen.local' }}</p>
             </div>
             <div class="text-right">
                 <span class="inline-block px-3 py-1 bg-indigo-50 text-indigo-700 font-bold text-xs rounded uppercase mb-2">Retail Invoice</span>
@@ -65,8 +65,11 @@
         <div class="flex justify-end my-6">
             <div class="w-64 space-y-2 text-sm">
                 <div class="flex justify-between text-gray-600"><span>Subtotal:</span><span>৳ {{ number_format($sale->subtotal, 2) }}</span></div>
-                @if ($sale->discount_amount > 0)
-                    <div class="flex justify-between text-emerald-600"><span>Discount:</span><span>- ৳ {{ number_format($sale->discount_amount, 2) }}</span></div>
+                @if ($sale->points_discount > 0)
+                    <div class="flex justify-between text-emerald-600 font-semibold"><span>Points Discount ({{ $sale->points_redeemed }} pts):</span><span>- ৳ {{ number_format($sale->points_discount, 2) }}</span></div>
+                @endif
+                @if ($sale->discount_amount > $sale->points_discount)
+                    <div class="flex justify-between text-emerald-600"><span>Other Discount:</span><span>- ৳ {{ number_format($sale->discount_amount - $sale->points_discount, 2) }}</span></div>
                 @endif
                 @if ($sale->tax_amount > 0)
                     <div class="flex justify-between text-gray-600"><span>VAT / Tax:</span><span>৳ {{ number_format($sale->tax_amount, 2) }}</span></div>
@@ -83,7 +86,7 @@
         </div>
 
         <div class="pt-6 border-t border-gray-200 text-center text-xs text-gray-400">
-            <p>{{ \App\Models\Setting::where('key', 'receipt_footer')->value('value') ?? 'Thank you for shopping with OneStop Supermarket!' }}</p>
+            <p>{{ \App\Models\Setting::where('key', 'receipt_footer')->value('value') ?? 'Thank you for shopping with erpGEN Supermarket!' }}</p>
         </div>
     </div>
 </body>

@@ -8,7 +8,32 @@
         </div>
     </x-slot>
 
-    <div class="py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" x-data="{
+        editModalOpen: false,
+        editSupplier: {
+            id: null,
+            supplier_id: '',
+            company_name: '',
+            contact_person: '',
+            phone: '',
+            email: '',
+            address: '',
+            status: 'active'
+        },
+        openEdit(s) {
+            this.editSupplier = {
+                id: s.id,
+                supplier_id: s.supplier_id || '',
+                company_name: s.company_name || '',
+                contact_person: s.contact_person || '',
+                phone: s.phone || '',
+                email: s.email || '',
+                address: s.address || '',
+                status: s.status || 'active'
+            };
+            this.editModalOpen = true;
+        }
+    }">
         @if (session('success'))
             <div class="mb-6 bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded-r-lg shadow-sm flex items-center">
                 <svg class="w-5 h-5 text-emerald-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
@@ -36,7 +61,7 @@
                 @csrf
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Supplier ID</label>
-                    <input name="supplier_id" value="{{ old('supplier_id') }}" placeholder="Auto generated (e.g. SUP-001)" class="w-full text-sm border-gray-300 rounded-lg shadow-sm font-mono focus:border-indigo-500 focus:ring-indigo-500">
+                    <input name="supplier_id" value="{{ old('supplier_id') }}" placeholder="Auto generated (e.g. SUP-0031)" class="w-full text-sm border-gray-300 rounded-lg shadow-sm font-mono focus:border-indigo-500 focus:ring-indigo-500">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Company Name <span class="text-red-500">*</span></label>
@@ -112,15 +137,31 @@
                                     </div>
                                     <div class="text-[11px] text-gray-400">Payable Due</div>
                                 </td>
-                                <td class="px-5 py-4 text-right whitespace-nowrap space-x-2">
-                                    <a href="{{ route('suppliers.ledger', $supplier) }}" class="inline-flex items-center px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold rounded border border-indigo-200 transition">
-                                        Ledger
-                                    </a>
-                                    <form method="POST" action="{{ route('suppliers.destroy', $supplier) }}" onsubmit="return confirm('Delete supplier {{ $supplier->company_name }}?');" class="inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button class="text-xs text-red-600 hover:text-red-800 font-semibold" type="submit">Delete</button>
-                                    </form>
+                                <td class="px-5 py-4 text-right whitespace-nowrap">
+                                    <div class="flex items-center justify-end gap-1.5">
+                                        <!-- Edit Supplier -->
+                                        <button 
+                                            type="button"
+                                            @click="openEdit({{ json_encode($supplier) }})"
+                                            class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-lg border border-indigo-200 transition">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                            Edit
+                                        </button>
+
+                                        <!-- Ledger -->
+                                        <a href="{{ route('suppliers.ledger', $supplier) }}" class="inline-flex items-center px-2.5 py-1.5 bg-gray-50 hover:bg-gray-100 text-gray-700 text-xs font-semibold rounded-lg border border-gray-200 transition">
+                                            Ledger
+                                        </a>
+
+                                        <!-- Delete -->
+                                        <form method="POST" action="{{ route('suppliers.destroy', $supplier) }}" onsubmit="return confirm('Delete supplier {{ $supplier->company_name }}?');" class="inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button class="inline-flex items-center px-2.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold rounded-lg border border-red-200 transition" type="submit">
+                                                Delete
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         @empty
@@ -138,5 +179,84 @@
                 </div>
             @endif
         </div>
+
+        <!-- Edit Supplier Modal -->
+        <div x-show="editModalOpen" style="display: none;" class="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
+            <div class="flex items-center justify-center min-h-screen px-4 py-6">
+                <div @click="editModalOpen = false" class="fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-xs transition-opacity"></div>
+
+                <div class="inline-block bg-white rounded-2xl shadow-2xl p-6 z-10 w-full max-w-xl border border-gray-100">
+                    <div class="flex items-center justify-between pb-4 border-b border-gray-100">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold">
+                                🏢
+                            </div>
+                            <div>
+                                <h3 class="text-base font-black text-gray-900">Edit Supplier Details</h3>
+                                <p class="text-xs text-gray-500">Update company name, representative contact, phone, and address.</p>
+                            </div>
+                        </div>
+                        <button @click="editModalOpen = false" class="text-gray-400 hover:text-gray-600 font-bold text-lg">&times;</button>
+                    </div>
+
+                    <form :action="`/suppliers/${editSupplier.id}`" method="POST" class="mt-5 space-y-4">
+                        @csrf
+                        @method('PUT')
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Supplier ID *</label>
+                                <input name="supplier_id" x-model="editSupplier.supplier_id" class="w-full text-sm border-gray-300 rounded-lg font-mono bg-gray-50" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Company Name *</label>
+                                <input name="company_name" x-model="editSupplier.company_name" class="w-full text-sm border-gray-300 rounded-lg" required>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Contact Person</label>
+                                <input name="contact_person" x-model="editSupplier.contact_person" class="w-full text-sm border-gray-300 rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Phone Number</label>
+                                <input name="phone" x-model="editSupplier.phone" class="w-full text-sm border-gray-300 rounded-lg">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Email Address</label>
+                                <input name="email" type="email" x-model="editSupplier.email" class="w-full text-sm border-gray-300 rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Status</label>
+                                <select name="status" x-model="editSupplier.status" class="w-full text-sm border-gray-300 rounded-lg">
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Address / Depo</label>
+                            <input name="address" x-model="editSupplier.address" class="w-full text-sm border-gray-300 rounded-lg">
+                        </div>
+
+                        <div class="mt-6 pt-4 border-t border-gray-100 flex items-center justify-end gap-2">
+                            <button type="button" @click="editModalOpen = false" class="px-4 py-2 border border-gray-300 text-gray-700 text-xs font-bold rounded-lg hover:bg-gray-50 transition">
+                                Cancel
+                            </button>
+                            <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-sm transition">
+                                Save Supplier
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
     </div>
 </x-app-layout>
+

@@ -3,7 +3,7 @@
         <div class="flex items-center justify-between">
             <div>
                 <h2 class="font-bold text-2xl text-gray-800 leading-tight">System & Store Settings</h2>
-                <p class="text-sm text-gray-500 mt-1">Configure OneStop supermarket identity, receipt metadata, currency, tax rates, and loyalty points.</p>
+                <p class="text-sm text-gray-500 mt-1">Configure erpGEN supermarket identity, receipt metadata, currency, tax rates, and loyalty points.</p>
             </div>
         </div>
     </x-slot>
@@ -38,11 +38,11 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Store / Business Name <span class="text-red-500">*</span></label>
-                        <input name="store_name" value="{{ old('store_name', $settings['store_name'] ?? 'OneStop Supermarket') }}" class="w-full text-sm border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
+                        <input name="store_name" value="{{ old('store_name', $settings['store_name'] ?? 'erpGEN Supermarket') }}" class="w-full text-sm border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Official Email</label>
-                        <input name="store_email" type="email" value="{{ old('store_email', $settings['store_email'] ?? 'support@onestop.local') }}" class="w-full text-sm border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <input name="store_email" type="email" value="{{ old('store_email', $settings['store_email'] ?? 'support@erpgen.local') }}" class="w-full text-sm border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Helpline Phone</label>
@@ -87,20 +87,25 @@
                     <svg class="w-5 h-5 text-indigo-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
                     Loyalty Rewards & Thermal Receipt
                 </h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Points Earned per ৳ 100 Spend</label>
                         <input name="loyalty_points_per_hundred" type="number" value="{{ old('loyalty_points_per_hundred', $settings['loyalty_points_per_hundred'] ?? '1') }}" class="w-full text-sm border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        <p class="text-[11px] text-gray-400 mt-1">Example: 1 means ৳ 1000 spend gives 10 loyalty points.</p>
+                        <p class="text-[11px] text-gray-400 mt-1">Example: 1 means ৳ 100 spend gives 1 loyalty point.</p>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Global Low Stock Alert Threshold</label>
+                        <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Discount (৳) per 100 Points</label>
+                        <input name="loyalty_discount_per_hundred_points" type="number" step="0.01" value="{{ old('loyalty_discount_per_hundred_points', $settings['loyalty_discount_per_hundred_points'] ?? '150.00') }}" class="w-full text-sm font-bold text-emerald-700 border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <p class="text-[11px] text-gray-400 mt-1">Example: 150 means 100 points = ৳ 150 discount.</p>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Low Stock Alert Threshold</label>
                         <input name="low_stock_threshold" type="number" value="{{ old('low_stock_threshold', $settings['low_stock_threshold'] ?? '5') }}" class="w-full text-sm border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        <p class="text-[11px] text-gray-400 mt-1">Default minimum quantity trigger when not configured per item.</p>
+                        <p class="text-[11px] text-gray-400 mt-1">Default minimum quantity trigger per item.</p>
                     </div>
                     <div class="sm:col-span-2">
                         <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Thermal Receipt Footer Message</label>
-                        <textarea name="receipt_footer" rows="2" class="w-full text-sm border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('receipt_footer', $settings['receipt_footer'] ?? 'Thank you for shopping at OneStop Supermarket! Please visit us again.') }}</textarea>
+                        <textarea name="receipt_footer" rows="2" class="w-full text-sm border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('receipt_footer', $settings['receipt_footer'] ?? 'Thank you for shopping at erpGEN Supermarket! Please visit us again.') }}</textarea>
                     </div>
                 </div>
             </div>

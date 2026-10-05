@@ -169,4 +169,68 @@ class POSTest extends TestCase
         $this->assertSame(890.0, (float) $sale->change_amount);
         $this->assertSame(0.0, (float) $sale->due_amount);
     }
+
+    public function test_loyalty_points_can_be_redeemed_for_discount_per_100_points_150_taka(): void
+    {
+        \App\Models\Setting::query()->updateOrCreate(['key' => 'loyalty_discount_per_hundred_points'], ['value' => '150']);
+
+        $user = User::factory()->create();
+        $customer = Customer::query()->create([
+            'customer_id' => 'CUS-POINTS-01',
+            'name' => 'Loyalty Member',
+            'status' => 'active',
+        ]);
+        $membershipType = MembershipType::query()->create([
+            'name' => 'Standard',
+            'discount_percentage' => 0,
+            'reward_points' => 1,
+            'is_active' => true,
+        ]);
+        $member = Member::query()->create([
+            'membership_id' => 'MEM-POINTS-01',
+            'member_number' => 'M-POINTS-100',
+            'customer_id' => $customer->id,
+            'membership_type_id' => $membershipType->id,
+            'name' => 'Loyalty Member',
+            'join_date' => now()->toDateString(),
+            'status' => 'active',
+            'points' => 250, // Has 250 points
+        ]);
+
+        $product = Product::query()->create([
+            'sku' => 'P-REDEEM-01',
+            'name' => 'Premium Olive Oil',
+            'slug' => 'premium-olive-oil',
+            'selling_price' => 800,
+            'current_stock' => 10,
+            'status' => 'active',
+        ]);
+
+        // Cart total ৳800, redeem 100 points -> ৳150 discount -> Grand Total ৳650
+        $response = $this->actingAs($user)
+            ->withSession(['pos_cart' => [$product->id => 1]])
+            ->post('/pos/complete', [
+                'member_number' => 'M-POINTS-100',
+                'points_redeemed' => 100,
+                'paid_amount' => 650,
+            ]);
+
+        $sale = Sale::query()->latest('id')->first();
+        $this->assertNotNull($sale);
+        $response->assertRedirect(route('sales.show', $sale));
+
+        $this->assertEquals(100, $sale->points_redeemed);
+        $this->assertEquals(150.0, (float) $sale->points_discount);
+        $this->assertEquals(150.0, (float) $sale->discount_amount);
+        $this->assertEquals(650.0, (float) $sale->grand_total);
+        $this->assertEquals(650.0, (float) $sale->paid_amount);
+
+        // Member balance should be 250 - 100 = 150 points + points earned on ৳650 spend (6 points) = 156 points
+        $member->refresh();
+        $this->assertDatabaseHas('membership_point_logs', [
+            'member_id' => $member->id,
+            'type' => 'redeemed',
+            'points' => -100,
+        ]);
+    }
 }

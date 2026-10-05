@@ -91,7 +91,12 @@
                     
                     <div class="space-y-2 text-sm text-gray-600">
                         <div class="flex justify-between"><span>Subtotal</span><span class="font-semibold text-gray-900">৳ {{ number_format($sale->subtotal, 2) }}</span></div>
-                        <div class="flex justify-between text-emerald-600"><span>Discount</span><span>- ৳ {{ number_format($sale->discount_amount, 2) }}</span></div>
+                        @if ($sale->points_discount > 0)
+                            <div class="flex justify-between text-emerald-600 font-semibold"><span>Points Discount ({{ $sale->points_redeemed }} pts)</span><span>- ৳ {{ number_format($sale->points_discount, 2) }}</span></div>
+                        @endif
+                        @if ($sale->discount_amount > $sale->points_discount)
+                            <div class="flex justify-between text-emerald-600"><span>Other Discount</span><span>- ৳ {{ number_format($sale->discount_amount - $sale->points_discount, 2) }}</span></div>
+                        @endif
                         <div class="flex justify-between"><span>VAT / Tax</span><span>৳ {{ number_format($sale->tax_amount, 2) }}</span></div>
                         <div class="flex justify-between text-base font-black text-gray-900 pt-2 border-t border-gray-200">
                             <span>Grand Total</span>

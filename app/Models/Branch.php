@@ -46,8 +46,14 @@ class Branch extends Model
         return $this->hasMany(Expense::class);
     }
 
+    public function cashRegisters(): HasMany
+    {
+        return $this->hasMany(CashRegister::class);
+    }
+
     public function primaryWarehouse()
     {
         return $this->hasOne(Warehouse::class)->where('is_primary', true)->latestOfMany();
     }
 }
+

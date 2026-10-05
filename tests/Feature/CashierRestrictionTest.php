@@ -145,4 +145,41 @@ class CashierRestrictionTest extends TestCase
         $response->assertOk();
         $response->assertJson(['success' => true]);
     }
+
+    public function test_cashier_completing_cash_sale_does_not_require_manager_authorization(): void
+    {
+        $product = \App\Models\Product::query()->create([
+            'sku' => 'P-CASHIER-01',
+            'name' => 'Fresh Milk 1L',
+            'slug' => 'fresh-milk-1l',
+            'selling_price' => 90,
+            'current_stock' => 15,
+            'status' => 'active',
+        ]);
+
+        $response = $this->actingAs($this->cashier)
+            ->withSession(['pos_cart' => [$product->id => 1]])
+            ->post(route('pos.complete'), [
+                'paid_amount' => 90,
+                'payment_method' => 'cash',
+            ]);
+
+        // Cashier redirects back to POS terminal ready for next customer with success message
+        $response->assertRedirect(route('pos.index'));
+        $response->assertSessionHas('success');
+        $response->assertSessionHas('last_sale_id');
+
+        $sale = \App\Models\Sale::query()->latest('id')->first();
+        $this->assertNotNull($sale);
+
+        // Accessing thermal receipt and invoice does not prompt for manager authorization
+        $thermalResponse = $this->actingAs($this->cashier)->get(route('sales.thermal', $sale));
+        $thermalResponse->assertOk();
+
+        $invoiceResponse = $this->actingAs($this->cashier)->get(route('sales.invoice', $sale));
+        $invoiceResponse->assertOk();
+
+        $showResponse = $this->actingAs($this->cashier)->get(route('sales.show', $sale));
+        $showResponse->assertOk();
+    }
 }

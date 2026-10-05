@@ -31,9 +31,9 @@
             <div class="flex items-center gap-2 xl:gap-4 min-w-0">
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ $isCashier && !$isManagerOverridden ? route('pos.index') : route('dashboard') }}" class="flex items-center gap-2 text-indigo-700 font-black text-lg xl:text-xl tracking-tight shrink-0 whitespace-nowrap">
-                        <span class="w-8 h-8 bg-indigo-600 text-white rounded-lg flex items-center justify-center font-black text-base shadow-xs">1</span>
-                        <span class="hidden sm:inline">OneStop<span class="text-[11px] text-indigo-500 font-semibold ml-1">ERP</span></span>
+                    <a href="{{ $isCashier && !$isManagerOverridden ? route('pos.index') : route('dashboard') }}" class="flex items-center gap-2 text-indigo-700 font-black text-lg xl:text-xl tracking-tight shrink-0 whitespace-nowrap group">
+                        <span class="w-8 h-8 bg-gradient-to-br from-indigo-600 to-indigo-800 text-white rounded-lg flex items-center justify-center font-black text-base shadow-xs group-hover:scale-105 transition-transform">e</span>
+                        <span class="font-black text-gray-900 tracking-tight">erp<span class="text-indigo-600">GEN</span></span>
                     </a>
                 </div>
 

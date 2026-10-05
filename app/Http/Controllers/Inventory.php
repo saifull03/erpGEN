@@ -64,7 +64,7 @@ class Inventory extends Controller
             (int) $validated['new_stock'],
             $validated['type'],
             $validated['reason'],
-            $validated['notes'],
+            $validated['notes'] ?? null,
             $request->user()
         );
 

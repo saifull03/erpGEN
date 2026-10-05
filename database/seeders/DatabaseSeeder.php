@@ -134,34 +134,8 @@ class DatabaseSeeder extends Seeder
         $this->call(ProductSeeder::class);
         $this->call(BranchSeeder::class);
 
-        // 6. Suppliers
-        $suppliers = [
-            [
-                'supplier_id' => 'SUP-0001',
-                'company_name' => 'Meghna Group & Teer Distribution',
-                'contact_person' => 'Md. Faruq Ahmed',
-                'phone' => '+8801819000001',
-                'email' => 'distribution@meghnagroup.com',
-                'address' => 'Tejgaon Industrial Area, Dhaka',
-                'opening_balance' => 0,
-                'current_payable_balance' => 12500.00,
-                'status' => 'active',
-            ],
-            [
-                'supplier_id' => 'SUP-0002',
-                'company_name' => 'Pran-RFL Super Distribution',
-                'contact_person' => 'Tanvir Hasan',
-                'phone' => '+8801819000002',
-                'email' => 'sales@pranfoods.net',
-                'address' => 'Middle Badda, Dhaka-1212',
-                'opening_balance' => 0,
-                'current_payable_balance' => 8400.00,
-                'status' => 'active',
-            ],
-        ];
-        foreach ($suppliers as $s) {
-            Supplier::query()->updateOrCreate(['supplier_id' => $s['supplier_id']], $s);
-        }
+        // 6. Suppliers (30 Supermarket Suppliers)
+        $this->call(SupplierSeeder::class);
 
         // 7. Customers
         $customers = [
@@ -292,18 +266,19 @@ class DatabaseSeeder extends Seeder
 
         // 11. Settings
         $settings = [
-            'store_name' => 'OneStop Supermarket',
+            'store_name' => 'erpGEN Supermarket',
             'store_logo' => '',
             'currency_symbol' => '৳',
             'currency_code' => 'BDT',
             'store_address' => 'House 12, Road 4, Dhanmondi, Dhaka-1205, Bangladesh',
             'store_phone' => '+880 1700-000000',
-            'store_email' => 'contact@onestop.local',
+            'store_email' => 'contact@erpgen.local',
             'invoice_prefix' => 'INV-',
             'tax_rate' => '0',
             'loyalty_points_per_hundred' => '1',
+            'loyalty_discount_per_hundred_points' => '150',
             'low_stock_threshold' => '5',
-            'receipt_footer' => 'Thank you for shopping at OneStop Supermarket! Please visit again.',
+            'receipt_footer' => 'Thank you for shopping at erpGEN Supermarket! Please visit again.',
         ];
         foreach ($settings as $key => $val) {
             Setting::query()->updateOrCreate(['key' => $key], ['value' => $val]);

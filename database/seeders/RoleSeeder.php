@@ -64,7 +64,20 @@ class RoleSeeder extends Seeder
             Permission::query()->updateOrCreate(['slug' => $p['slug']], $p);
         }
 
-        // Attach permissions
+        // Attach all permissions to Super Admin and Admin roles
+        $allPermissionIds = Permission::query()->pluck('id');
+
+        $superAdminRole = Role::query()->where('slug', 'super-admin')->first();
+        if ($superAdminRole) {
+            $superAdminRole->permissions()->sync($allPermissionIds);
+        }
+
+        $adminRole = Role::query()->where('slug', 'admin')->first();
+        if ($adminRole) {
+            $adminRole->permissions()->sync($allPermissionIds);
+        }
+
+        // Attach specific permissions to cashier
         $cashierRole = Role::query()->where('slug', 'cashier')->first();
         if ($cashierRole) {
             $cashierPermissions = Permission::query()
@@ -90,3 +103,4 @@ class RoleSeeder extends Seeder
         }
     }
 }
+

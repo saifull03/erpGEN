@@ -3,7 +3,7 @@
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
                 <h2 class="font-bold text-2xl text-gray-800 leading-tight">
-                    OneStop Supermarket Dashboard
+                    erpGEN Supermarket Dashboard
                 </h2>
                 <p class="text-sm text-gray-500 mt-1">Daily operations overview, live sales, inventory health, and cash status.</p>
             </div>
@@ -86,6 +86,76 @@
             </div>
         </div>
 
+        <!-- Multi-Branch Chain Overview (Super Admin Multi-Outlet Dashboard) -->
+        @if (isset($branches) && $branches->count() > 0)
+            <div class="bg-white rounded-2xl shadow-xs border border-indigo-100 p-6">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                    <div>
+                        <h3 class="text-base font-black text-gray-900 flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 bg-indigo-600 rounded-full animate-ping"></span>
+                            Multi-Branch Outlets &amp; Chain Operations
+                        </h3>
+                        <p class="text-xs text-gray-500">Live operational status and sales across all supermarket locations.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <a href="{{ route('branches.index') }}" class="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-lg transition border border-indigo-200">
+                            Manage Branches &rarr;
+                        </a>
+                        <a href="{{ route('transfers.index') }}" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-lg transition">
+                            Stock Transfers &rarr;
+                        </a>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    @foreach ($branches as $branch)
+                        <div class="p-4 rounded-xl border {{ $activeBranchId == $branch->id ? 'border-indigo-500 bg-indigo-50/40 ring-2 ring-indigo-500/20' : 'border-gray-200 bg-gray-50/60 hover:bg-gray-50' }} transition">
+                            <div class="flex items-center justify-between">
+                                <span class="font-black text-xs text-gray-900 truncate">{{ $branch->name }}</span>
+                                @if ($branch->is_main)
+                                    <span class="px-1.5 py-0.2 bg-indigo-600 text-white rounded text-[9px] font-black uppercase">HQ</span>
+                                @else
+                                    <span class="px-1.5 py-0.2 bg-gray-200 text-gray-700 rounded text-[9px] font-bold">{{ $branch->code }}</span>
+                                @endif
+                            </div>
+
+                            <div class="mt-3 space-y-1.5 text-xs">
+                                <div class="flex justify-between text-gray-600">
+                                    <span>Today Sales:</span>
+                                    <span class="font-black text-emerald-600">৳ {{ number_format($branch->today_sales, 2) }}</span>
+                                </div>
+                                <div class="flex justify-between text-gray-500 text-[11px]">
+                                    <span>MTD Sales:</span>
+                                    <span class="font-bold text-gray-700">৳ {{ number_format($branch->mtd_sales, 2) }}</span>
+                                </div>
+                                <div class="flex justify-between text-gray-500 text-[11px]">
+                                    <span>Active Shifts:</span>
+                                    <span class="font-bold {{ $branch->open_shifts_count > 0 ? 'text-indigo-600' : 'text-gray-400' }}">
+                                        {{ $branch->open_shifts_count }} Open
+                                    </span>
+                                </div>
+                                <div class="flex justify-between text-gray-500 text-[11px]">
+                                    <span>Staff Assigned:</span>
+                                    <span class="font-semibold text-gray-700">{{ $branch->users_count }} users</span>
+                                </div>
+                            </div>
+
+                            <div class="mt-3 pt-2.5 border-t border-gray-200/80 flex items-center justify-between">
+                                <form action="{{ route('branches.switch') }}" method="POST">
+                                    @csrf
+                                    <input type="hidden" name="branch_id" value="{{ $branch->id }}">
+                                    <button type="submit" class="text-[11px] font-bold {{ $activeBranchId == $branch->id ? 'text-indigo-700 underline' : 'text-gray-600 hover:text-indigo-700' }}">
+                                        {{ $activeBranchId == $branch->id ? '● Active Context' : 'Switch Outlet &rarr;' }}
+                                    </button>
+                                </form>
+                                <span class="text-[10px] text-gray-400 font-mono">{{ $branch->warehouses_count }} WH</span>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
         <!-- Secondary Highlights: Cash in Hand & Operational Metrics -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div class="bg-gradient-to-br from-indigo-900 to-indigo-800 text-white rounded-xl p-5 shadow-sm">
@@ -96,6 +166,7 @@
                     <a href="{{ route('shifts.index') }}" class="text-white underline font-semibold">View Register</a>
                 </div>
             </div>
+
 
             <div class="bg-white rounded-xl p-5 border border-gray-100 shadow-sm flex items-center justify-between">
                 <div>

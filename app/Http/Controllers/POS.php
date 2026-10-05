@@ -125,6 +125,7 @@ class POS extends Controller
             'member_number' => ['nullable', 'string', 'max:50'],
             'customer_id' => ['nullable', 'exists:customers,id'],
             'invoice_discount' => ['nullable', 'numeric', 'min:0'],
+            'points_redeemed' => ['nullable', 'integer', 'min:0'],
             'payment_method' => ['nullable', 'string'],
             'payments' => ['nullable', 'array'],
             'notes' => ['nullable', 'string', 'max:500'],
@@ -141,8 +142,16 @@ class POS extends Controller
                     'message' => "Sale {$sale->invoice_number} completed.",
                     'sale_id' => $sale->id,
                     'invoice_number' => $sale->invoice_number,
-                    'redirect_url' => route('sales.show', $sale),
+                    'redirect_url' => route('pos.index'),
+                    'thermal_url' => route('sales.thermal', $sale),
                 ]);
+            }
+
+            // Cashiers stay on POS register ready for next customer with quick thermal print option
+            if ($request->user()?->isCashier() && session('manager_authorized_until', 0) <= time()) {
+                return redirect()->route('pos.index')
+                    ->with('success', "Sale #{$sale->invoice_number} completed successfully.")
+                    ->with('last_sale_id', $sale->id);
             }
 
             return redirect()->route('sales.show', $sale)->with('success', "Sale #{$sale->invoice_number} completed successfully.");

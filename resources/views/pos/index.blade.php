@@ -62,6 +62,8 @@
         memberSearchLoading: false,
         activeMember: {{ json_encode($activeMember) }},
         invoiceDiscount: 0,
+        pointsConversionRate: {{ (float) (\App\Models\Setting::where('key', 'loyalty_discount_per_hundred_points')->value('value') ?? 150) }},
+        redeemPoints: 0,
         taxRate: {{ \App\Models\Setting::where('key', 'tax_rate')->value('value') ?? 0 }},
         paymentModalOpen: false,
         splitCash: {{ $subtotal }},
@@ -98,9 +100,26 @@
             let pct = parseFloat(this.activeMember.membership_type.discount_percentage || 0);
             return pct > 0 ? (this.rawSubtotal * pct) / 100 : 0;
         },
+        get pointsDiscount() {
+            if (!this.activeMember) return 0;
+            let pts = parseInt(this.redeemPoints) || 0;
+            if (pts <= 0) return 0;
+            let maxPts = parseInt(this.activeMember.points) || 0;
+            let usablePts = Math.min(pts, maxPts);
+            let rate = parseFloat(this.pointsConversionRate) / 100;
+            let disc = usablePts * rate;
+            let remainingSubtotal = Math.max(0, this.rawSubtotal - this.memberDiscount);
+            return Math.min(remainingSubtotal, Math.round(disc * 100) / 100);
+        },
         get totalDiscount() {
             let invDisc = parseFloat(this.invoiceDiscount) || 0;
-            return Math.min(this.rawSubtotal, this.memberDiscount + invDisc);
+            return Math.min(this.rawSubtotal, this.memberDiscount + invDisc + this.pointsDiscount);
+        },
+        setRedeemPoints(pts) {
+            if (!this.activeMember) return;
+            let maxAvailable = parseInt(this.activeMember.points) || 0;
+            let targetPts = Math.min(Math.max(0, parseInt(pts) || 0), maxAvailable);
+            this.redeemPoints = targetPts;
         },
         get taxAmount() {
             let taxable = Math.max(0, this.rawSubtotal - this.totalDiscount);
@@ -185,6 +204,7 @@
                     discount_percentage: member.discount_percentage
                 }
             };
+            this.redeemPoints = 0;
             this.memberSearchTerm = member.member_number;
             this.memberSearchResults = [];
             document.getElementById('member_number_input').value = member.member_number;
@@ -213,6 +233,7 @@
 
         clearMember() {
             this.activeMember = null;
+            this.redeemPoints = 0;
             this.memberSearchTerm = '';
             this.memberSearchResults = [];
             document.getElementById('member_number_input').value = '';
@@ -243,6 +264,7 @@
                 let data = await res.json();
                 if (res.ok && data.success) {
                     this.activeMember = data.member;
+                    this.redeemPoints = 0;
                     this.memberSearchTerm = data.member.member_number;
                     document.getElementById('member_number_input').value = data.member.member_number;
                     this.regSuccess = `Registered: ${data.member.name}`;
@@ -268,6 +290,7 @@
             let payments = [{ method: 'cash', amount: parseFloat(paidVal) }];
             document.getElementById('payments_json_input').value = JSON.stringify(payments);
             document.getElementById('inv_discount_input').value = this.invoiceDiscount;
+            document.getElementById('points_redeemed_input').value = this.redeemPoints;
             document.getElementById('complete_sale_form').submit();
         },
 
@@ -284,6 +307,7 @@
 
             document.getElementById('payments_json_input').value = JSON.stringify(payments);
             document.getElementById('inv_discount_input').value = this.invoiceDiscount;
+            document.getElementById('points_redeemed_input').value = this.redeemPoints;
             document.getElementById('complete_sale_form').submit();
         },
 
@@ -353,8 +377,22 @@
 
         <!-- Flash messages -->
         @if (session('success'))
-            <div class="mb-4 bg-emerald-50 border-l-4 border-emerald-500 p-3.5 rounded-r-lg text-emerald-800 text-sm font-semibold flex items-center justify-between shadow-sm">
-                <span>{{ session('success') }}</span>
+            <div class="mb-4 bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded-r-xl text-emerald-900 text-sm font-semibold flex items-center justify-between shadow-2xs flex-wrap gap-3">
+                <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center font-black text-xs">✓</span>
+                    <span>{{ session('success') }}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    @if ($lastSale)
+                        <button type="button" @click="printLastReceipt()" class="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-lg shadow-2xs transition inline-flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                            Print Receipt (F11)
+                        </button>
+                        <a href="{{ route('sales.show', $lastSale) }}" class="px-3 py-1.5 bg-white border border-emerald-300 hover:bg-emerald-100 text-emerald-900 text-xs font-bold rounded-lg shadow-2xs transition inline-flex items-center gap-1">
+                            View Invoice
+                        </a>
+                    @endif
+                </div>
             </div>
         @endif
 
@@ -546,20 +584,70 @@
                         </div>
                     </div>
 
-                    <!-- Member info badge -->
+                    <!-- Member info badge & Points Redemption -->
                     <template x-if="activeMember">
-                        <div class="mt-3 p-3 bg-indigo-50/70 border border-indigo-200 rounded-lg flex items-center justify-between">
-                            <div>
-                                <div class="text-xs font-bold text-indigo-900" x-text="activeMember.name"></div>
-                                <div class="text-[11px] text-indigo-700">
-                                    <span class="font-semibold" x-text="activeMember.membership_type.name"></span> Tier 
-                                    (<span x-text="activeMember.membership_type.discount_percentage + '% Discount'"></span>)
+                        <div class="mt-3 space-y-2">
+                            <div class="p-3 bg-indigo-50/80 border border-indigo-200 rounded-xl flex items-center justify-between shadow-2xs">
+                                <div>
+                                    <div class="text-xs font-bold text-indigo-900" x-text="activeMember.name"></div>
+                                    <div class="text-[11px] text-indigo-700">
+                                        <span class="font-semibold" x-text="activeMember.membership_type.name"></span> Tier 
+                                        (<span x-text="activeMember.membership_type.discount_percentage + '% Tier Discount'"></span>)
+                                    </div>
+                                    <div class="text-[11px] text-amber-800 font-bold mt-0.5 flex items-center gap-1.5 flex-wrap">
+                                        <span class="inline-flex items-center px-1.5 py-0.2 bg-amber-100 text-amber-900 rounded text-[10px] font-black">★ <span x-text="activeMember.points"></span> pts</span>
+                                        <span class="text-[10px] text-gray-500 font-medium">(Worth ৳ <span x-text="((activeMember.points / 100) * pointsConversionRate).toFixed(2)"></span> discount)</span>
+                                    </div>
                                 </div>
-                                <div class="text-[10px] text-amber-700 font-bold mt-0.5" x-text="'★ ' + activeMember.points + ' Loyalty Points'"></div>
+                                <button type="button" @click="clearMember()" class="text-xs text-red-500 hover:text-red-700 font-semibold px-2 py-1 hover:bg-red-50 rounded-lg transition">
+                                    Remove
+                                </button>
                             </div>
-                            <button type="button" @click="clearMember()" class="text-xs text-red-500 hover:text-red-700 font-semibold">
-                                Remove
-                            </button>
+
+                            <!-- Loyalty Points Redemption Panel -->
+                            <template x-if="activeMember.points > 0">
+                                <div class="p-3 bg-gradient-to-r from-amber-50/90 to-emerald-50/90 border border-amber-200 rounded-xl space-y-2 shadow-2xs">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[11px] font-black text-amber-900 uppercase tracking-wide flex items-center gap-1">
+                                            <span>🎁 Redeem Loyalty Points</span>
+                                        </span>
+                                        <span class="text-[10px] font-bold text-emerald-800 bg-emerald-100/80 border border-emerald-200 px-1.5 py-0.2 rounded-md">
+                                            100 pts = ৳ <span x-text="pointsConversionRate"></span>
+                                        </span>
+                                    </div>
+
+                                    <div class="flex items-center gap-2">
+                                        <div class="relative flex-1">
+                                            <input type="number" min="0" :max="activeMember.points" step="10" x-model.number="redeemPoints" placeholder="Points to redeem (e.g. 100)" class="w-full text-xs font-bold border-amber-300 rounded-lg shadow-2xs focus:ring-amber-500 focus:border-amber-500 bg-white">
+                                        </div>
+                                        <div class="text-xs font-black text-emerald-700 whitespace-nowrap bg-white px-2 py-1.5 rounded-lg border border-emerald-200 shadow-2xs">
+                                            - ৳ <span x-text="pointsDiscount.toFixed(2)"></span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Quick Redemption Chips -->
+                                    <div class="flex items-center gap-1 flex-wrap text-[10px]">
+                                        <template x-if="activeMember.points >= 100">
+                                            <button type="button" @click="setRedeemPoints(100)" class="px-2 py-0.5 rounded-md bg-white border border-amber-300 hover:bg-amber-100 text-amber-900 font-bold transition shadow-2xs">
+                                                100 pts (-৳<span x-text="pointsConversionRate"></span>)
+                                            </button>
+                                        </template>
+                                        <template x-if="activeMember.points >= 200">
+                                            <button type="button" @click="setRedeemPoints(200)" class="px-2 py-0.5 rounded-md bg-white border border-amber-300 hover:bg-amber-100 text-amber-900 font-bold transition shadow-2xs">
+                                                200 pts (-৳<span x-text="pointsConversionRate * 2"></span>)
+                                            </button>
+                                        </template>
+                                        <button type="button" @click="setRedeemPoints(activeMember.points)" class="px-2 py-0.5 rounded-md bg-amber-600 hover:bg-amber-700 text-white font-bold transition shadow-2xs">
+                                            Max (<span x-text="activeMember.points"></span> pts)
+                                        </button>
+                                        <template x-if="redeemPoints > 0">
+                                            <button type="button" @click="redeemPoints = 0" class="px-1.5 py-0.5 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold transition" title="Clear Points">
+                                                ✕
+                                            </button>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
                         </div>
                     </template>
                 </div>
@@ -580,8 +668,17 @@
 
                             <template x-if="memberDiscount > 0">
                                 <div class="flex justify-between text-emerald-600 font-medium">
-                                    <span>Membership Discount</span>
+                                    <span>Membership Tier Discount</span>
                                     <span>- ৳ <span x-text="memberDiscount.toFixed(2)"></span></span>
+                                </div>
+                            </template>
+
+                            <template x-if="pointsDiscount > 0">
+                                <div class="flex justify-between text-emerald-700 font-bold bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-200">
+                                    <span class="flex items-center gap-1">
+                                        <span>🎁 Loyalty Points Discount (<span x-text="redeemPoints"></span> pts)</span>
+                                    </span>
+                                    <span>- ৳ <span x-text="pointsDiscount.toFixed(2)"></span></span>
                                 </div>
                             </template>
 
@@ -693,6 +790,7 @@
             @csrf
             <input type="hidden" id="member_number_input" name="member_number" value="{{ $activeMember?->member_number ?? '' }}">
             <input type="hidden" id="inv_discount_input" name="invoice_discount" value="0">
+            <input type="hidden" id="points_redeemed_input" name="points_redeemed" value="0">
             <input type="hidden" id="payments_json_input" name="payments" value="">
         </form>
 

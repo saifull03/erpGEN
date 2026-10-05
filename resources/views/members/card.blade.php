@@ -26,8 +26,8 @@
         <div class="flex justify-between items-start z-10">
             <div>
                 <span class="text-base font-black tracking-tight text-white flex items-center gap-1.5">
-                    <span class="w-5 h-5 bg-white text-indigo-900 rounded font-black text-xs flex items-center justify-center">1</span>
-                    OneStop Supermarket
+                    <span class="w-5 h-5 bg-gradient-to-br from-indigo-500 to-indigo-700 text-white rounded font-black text-xs flex items-center justify-center">e</span>
+                    erp<span class="text-indigo-400">GEN</span> Supermarket
                 </span>
                 <span class="text-[10px] text-indigo-300 uppercase tracking-widest block mt-0.5">Loyalty Privilege Club</span>
             </div>
