@@ -13,6 +13,8 @@ class Sale extends Model
         'invoice_number',
         'user_id',
         'customer_id',
+        'branch_id',
+        'warehouse_id',
         'member_id',
         'shift_id',
         'subtotal',
@@ -47,6 +49,16 @@ class Sale extends Model
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
+    public function warehouse(): BelongsTo
+    {
+        return $this->belongsTo(Warehouse::class);
     }
 
     public function member(): BelongsTo

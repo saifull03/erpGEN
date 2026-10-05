@@ -126,8 +126,9 @@ class ReturnService
             // Deduct Points from Member if applicable
             if ($sale->member_id && $sale->member) {
                 $member = $sale->member;
-                $pointsPerHundred = $member->membershipType ? (int) $member->membershipType->reward_points : 1;
-                $pointsToDeduct = (int) floor(($totalRefund / 100) * $pointsPerHundred);
+                $baseRate = (int) (\App\Models\Setting::query()->where('key', 'loyalty_points_per_hundred')->value('value') ?? 1);
+                $tierMultiplier = $member->membershipType ? (int) $member->membershipType->reward_points : 1;
+                $pointsToDeduct = (int) floor(($totalRefund / 100) * $baseRate * $tierMultiplier);
 
                 if ($pointsToDeduct > 0) {
                     $member->decrement('points', min($member->points, $pointsToDeduct));

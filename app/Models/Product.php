@@ -64,6 +64,19 @@ class Product extends Model
         return $this->hasMany(StockMovement::class);
     }
 
+    public function warehouseStocks(): HasMany
+    {
+        return $this->hasMany(WarehouseProductStock::class);
+    }
+
+    public function stockInWarehouse(?int $warehouseId): int
+    {
+        if (!$warehouseId) {
+            return $this->current_stock;
+        }
+        return $this->warehouseStocks()->where('warehouse_id', $warehouseId)->value('stock') ?? 0;
+    }
+
     public function priceHistories(): HasMany
     {
         return $this->hasMany(ProductPriceHistory::class);

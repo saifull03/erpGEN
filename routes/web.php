@@ -59,6 +59,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('brands', Brand::class);
     Route::resource('units', Unit::class);
 
+    // Multi-Branch & Warehouses & Transfers
+    Route::resource('branches', \App\Http\Controllers\BranchController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::post('/branches/switch', [\App\Http\Controllers\BranchController::class, 'switchBranch'])->name('branches.switch');
+    Route::resource('warehouses', \App\Http\Controllers\WarehouseController::class)->only(['index', 'store', 'update']);
+    Route::resource('transfers', \App\Http\Controllers\StockTransferController::class);
+    Route::post('/transfers/{transfer}/ship', [\App\Http\Controllers\StockTransferController::class, 'ship'])->name('transfers.ship');
+    Route::post('/transfers/{transfer}/receive', [\App\Http\Controllers\StockTransferController::class, 'receive'])->name('transfers.receive');
+    Route::post('/transfers/{transfer}/cancel', [\App\Http\Controllers\StockTransferController::class, 'cancel'])->name('transfers.cancel');
+
     // Inventory & Stock Tracking
     Route::get('/inventory', [Inventory::class, 'index'])->name('inventory.index');
     Route::post('/inventory/adjust', [Inventory::class, 'adjust'])->name('inventory.adjust');

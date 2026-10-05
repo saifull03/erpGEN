@@ -207,10 +207,11 @@ class SaleService
                 $this->shiftService->recordCashSales($activeShift, $cashPaidInTransaction);
             }
 
-            // 8. Reward Loyalty Points to Member
+            // 8. Reward Loyalty Points to Member (e.g. ৳100 spend = 1 point * tier multiplier)
             if ($member && $grandTotal > 0) {
-                $pointsPerHundred = $member->membershipType ? (int) $member->membershipType->reward_points : 1;
-                $earnedPoints = (int) floor(($grandTotal / 100) * $pointsPerHundred);
+                $baseRate = (int) (\App\Models\Setting::query()->where('key', 'loyalty_points_per_hundred')->value('value') ?? 1);
+                $tierMultiplier = $member->membershipType ? (int) $member->membershipType->reward_points : 1;
+                $earnedPoints = (int) floor(($grandTotal / 100) * $baseRate * $tierMultiplier);
 
                 if ($earnedPoints > 0) {
                     $member->increment('points', $earnedPoints);

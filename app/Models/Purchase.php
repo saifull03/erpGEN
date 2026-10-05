@@ -11,6 +11,8 @@ class Purchase extends Model
     protected $fillable = [
         'purchase_invoice_number',
         'supplier_id',
+        'branch_id',
+        'warehouse_id',
         'user_id',
         'date',
         'subtotal',
@@ -36,6 +38,16 @@ class Purchase extends Model
     public function supplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class);
+    }
+
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
+    public function warehouse(): BelongsTo
+    {
+        return $this->belongsTo(Warehouse::class);
     }
 
     public function user(): BelongsTo
