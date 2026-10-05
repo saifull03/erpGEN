@@ -25,8 +25,13 @@ use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/dashboard');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'cashier.branch'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Manager Authorization & Override
+    Route::get('/manager-override', [\App\Http\Controllers\ManagerOverrideController::class, 'show'])->name('manager.override.form');
+    Route::post('/manager-override', [\App\Http\Controllers\ManagerOverrideController::class, 'authorizeOverride'])->name('manager.override.submit');
+    Route::post('/pos/manager-authorize', [\App\Http\Controllers\ManagerOverrideController::class, 'ajaxAuthorize'])->name('pos.manager_authorize');
 
     // POS module
     Route::get('/pos', [POS::class, 'index'])->name('pos.index');

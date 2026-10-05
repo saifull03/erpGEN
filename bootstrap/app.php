@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'role' => CheckRole::class,
+            'cashier.branch' => \App\Http\Middleware\EnsureCashierBranchAndRole::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

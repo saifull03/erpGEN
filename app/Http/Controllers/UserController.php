@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Branch;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\AuditService;
@@ -12,12 +13,14 @@ class UserController extends Controller
 {
     public function index()
     {
-        $users = User::query()->with('role')->latest()->paginate(20);
+        $users = User::query()->with(['role', 'branch'])->latest()->paginate(20);
         $roles = Role::all();
+        $branches = Branch::where('status', 'active')->get();
 
         return view('users.index', [
             'users' => $users,
             'roles' => $roles,
+            'branches' => $branches,
         ]);
     }
 
@@ -28,14 +31,22 @@ class UserController extends Controller
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'phone' => ['nullable', 'string', 'max:50'],
             'role_id' => ['required', 'exists:roles,id'],
+            'branch_id' => ['nullable', 'exists:branches,id'],
             'password' => ['required', 'string', 'min:6'],
             'status' => ['required', 'string', 'in:active,inactive'],
         ]);
 
+        $role = Role::find($validated['role_id']);
+        if ($role && $role->slug === 'cashier' && empty($validated['branch_id'])) {
+            // Assign default main branch if not specified
+            $mainBranch = Branch::where('is_main', true)->first();
+            $validated['branch_id'] = $mainBranch?->id;
+        }
+
         $validated['password'] = Hash::make($validated['password']);
 
         $user = User::query()->create($validated);
-        AuditService::log('create_user', 'Users', (string) $user->id, null, ['name' => $user->name, 'email' => $user->email]);
+        AuditService::log('create_user', 'Users', (string) $user->id, null, ['name' => $user->name, 'email' => $user->email, 'branch_id' => $user->branch_id]);
 
         return redirect()->route('users.index')->with('success', "Staff member '{$user->name}' added successfully.");
     }
@@ -47,6 +58,7 @@ class UserController extends Controller
             'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $user->id],
             'phone' => ['nullable', 'string', 'max:50'],
             'role_id' => ['required', 'exists:roles,id'],
+            'branch_id' => ['nullable', 'exists:branches,id'],
             'password' => ['nullable', 'string', 'min:6'],
             'status' => ['required', 'string', 'in:active,inactive'],
         ]);
@@ -58,7 +70,7 @@ class UserController extends Controller
         }
 
         $user->update($validated);
-        AuditService::log('update_user', 'Users', (string) $user->id, null, ['name' => $user->name]);
+        AuditService::log('update_user', 'Users', (string) $user->id, null, ['name' => $user->name, 'branch_id' => $user->branch_id]);
 
         return redirect()->route('users.index')->with('success', "Staff member '{$user->name}' updated.");
     }

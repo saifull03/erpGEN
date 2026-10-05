@@ -3,7 +3,7 @@
         <div class="flex items-center justify-between">
             <div>
                 <h2 class="font-bold text-2xl text-gray-800 leading-tight">Employee & User Management</h2>
-                <p class="text-sm text-gray-500 mt-1">Manage supermarket staff members, assign system roles (Super Admin, Manager, Cashier, Inventory, Accountant).</p>
+                <p class="text-sm text-gray-500 mt-1">Manage supermarket staff members, assign system roles and branch outlet locations.</p>
             </div>
         </div>
     </x-slot>
@@ -55,6 +55,15 @@
                     </select>
                 </div>
                 <div class="lg:col-span-2">
+                    <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Assigned Branch <span class="text-indigo-600 font-bold">(Required for Cashier)</span></label>
+                    <select name="branch_id" class="w-full text-sm border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <option value="">HQ / Central (All Branches)</option>
+                        @foreach ($branches as $b)
+                            <option value="{{ $b->id }}" {{ old('branch_id') == $b->id ? 'selected' : '' }}>{{ $b->name }} ({{ $b->code }})</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="lg:col-span-2">
                     <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Password <span class="text-red-500">*</span></label>
                     <input name="password" type="password" placeholder="Minimum 6 characters" class="w-full text-sm border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
                 </div>
@@ -65,10 +74,9 @@
                         <option value="inactive">Inactive</option>
                     </select>
                 </div>
-                <div class="lg:col-span-3 flex items-end">
+                <div class="lg:col-span-1 flex items-end">
                     <button type="submit" class="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm rounded-lg shadow-sm transition flex items-center justify-center">
-                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
-                        Create User Account
+                        Add User
                     </button>
                 </div>
             </form>
@@ -87,7 +95,7 @@
                         <tr>
                             <th class="px-5 py-3.5 text-left">Staff Name</th>
                             <th class="px-5 py-3.5 text-left">Email / Username</th>
-                            <th class="px-5 py-3.5 text-left">Phone</th>
+                            <th class="px-5 py-3.5 text-left">Branch</th>
                             <th class="px-5 py-3.5 text-left">Role & Access</th>
                             <th class="px-5 py-3.5 text-center">Status</th>
                             <th class="px-5 py-3.5 text-right">Action</th>
@@ -105,8 +113,8 @@
                                 <td class="px-5 py-4 font-mono text-xs text-gray-600">
                                     {{ $user->email }}
                                 </td>
-                                <td class="px-5 py-4 text-xs text-gray-600">
-                                    {{ $user->phone ?? '—' }}
+                                <td class="px-5 py-4 text-xs font-semibold text-gray-700">
+                                    {{ $user->branch?->name ?? 'HQ / Consolidated' }}
                                 </td>
                                 <td class="px-5 py-4">
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold 

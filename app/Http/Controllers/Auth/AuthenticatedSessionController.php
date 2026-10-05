@@ -28,6 +28,19 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        $user = $request->user();
+
+        // If user is a cashier, lock branch and redirect directly to POS terminal
+        if ($user && $user->role?->slug === 'cashier') {
+            if ($user->branch_id) {
+                session([
+                    'active_branch_id' => $user->branch_id,
+                    'active_branch_name' => $user->branch?->name ?? 'Assigned Branch',
+                ]);
+            }
+            return redirect()->route('pos.index');
+        }
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 

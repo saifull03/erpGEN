@@ -90,6 +90,11 @@ class BranchController extends Controller
 
     public function switchBranch(Request $request): RedirectResponse
     {
+        $user = $request->user();
+        if ($user && $user->role?->slug === 'cashier') {
+            return back()->with('error', 'Cashiers are restricted to their assigned branch.');
+        }
+
         $branchId = $request->input('branch_id');
 
         if ($branchId === 'all' || empty($branchId)) {
