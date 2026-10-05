@@ -31,6 +31,7 @@ Route::middleware(['auth', 'verified', 'cashier.branch'])->group(function () {
     // Manager Authorization & Override
     Route::get('/manager-override', [\App\Http\Controllers\ManagerOverrideController::class, 'show'])->name('manager.override.form');
     Route::post('/manager-override', [\App\Http\Controllers\ManagerOverrideController::class, 'authorizeOverride'])->name('manager.override.submit');
+    Route::post('/manager-override/revoke', [\App\Http\Controllers\ManagerOverrideController::class, 'revokeOverride'])->name('manager.override.revoke');
     Route::post('/pos/manager-authorize', [\App\Http\Controllers\ManagerOverrideController::class, 'ajaxAuthorize'])->name('pos.manager_authorize');
 
     // POS module

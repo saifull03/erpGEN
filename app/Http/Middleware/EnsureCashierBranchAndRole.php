@@ -52,6 +52,7 @@ class EnsureCashierBranchAndRole
                 'logout',
                 'manager.override.form',
                 'manager.override.submit',
+                'manager.override.revoke',
                 'pos.manager_authorize',
                 'branches.switch',
             ];

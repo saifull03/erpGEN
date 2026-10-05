@@ -154,4 +154,11 @@ class ManagerOverrideController extends Controller
             'manager_name' => $authorizedManager->name,
         ]);
     }
+
+    public function revokeOverride(Request $request): RedirectResponse
+    {
+        session()->forget(['manager_authorized_until', 'authorized_by_manager_id', 'authorized_by_manager_name']);
+        return redirect()->route('pos.index')->with('info', 'Manager override session closed.');
+    }
 }
+

@@ -42,6 +42,12 @@
                         <span class="px-1.5 py-0.2 bg-amber-600 text-white rounded-full text-[10px]">{{ $heldSales->count() }}</span>
                     @endif
                 </button>
+
+                <!-- Manager Password Authorization Modal Trigger -->
+                <button type="button" @click="$dispatch('open-manager-modal')" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg shadow-sm transition flex items-center gap-1.5" title="Branch Manager Authorization">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                    <span>Manager Unlock</span>
+                </button>
             </div>
         </div>
     </x-slot>
@@ -68,6 +74,13 @@
         shiftModalOpen: false,
         closeShiftModalOpen: false,
         shortcutsModalOpen: false,
+        managerModalOpen: false,
+        managerEmail: '',
+        managerPassword: '',
+        managerAction: 'backoffice',
+        managerAuthError: '',
+        managerAuthSuccess: '',
+        managerAuthLoading: false,
 
         // Quick Member Registration State
         newMemberName: '',
@@ -280,11 +293,54 @@
             @else
                 alert('No prior receipt found in this session.');
             @endif
+        },
+
+        async submitManagerAuth() {
+            if (!this.managerPassword) {
+                this.managerAuthError = 'Please enter the branch manager password.';
+                return;
+            }
+            this.managerAuthLoading = true;
+            this.managerAuthError = '';
+            this.managerAuthSuccess = '';
+            try {
+                let res = await fetch('{{ route('pos.manager_authorize') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+                    },
+                    body: JSON.stringify({
+                        password: this.managerPassword,
+                        email: this.managerEmail,
+                        action: this.managerAction
+                    })
+                });
+                let data = await res.json();
+                if (res.ok && data.success) {
+                    this.managerAuthSuccess = data.message;
+                    this.managerPassword = '';
+                    setTimeout(() => {
+                        this.managerModalOpen = false;
+                        if (this.managerAction === 'backoffice') {
+                            window.location.href = '{{ route('dashboard') }}';
+                        }
+                    }, 800);
+                } else {
+                    this.managerAuthError = data.message || 'Authorization failed. Invalid credentials.';
+                }
+            } catch (e) {
+                this.managerAuthError = 'Network error during authorization.';
+            } finally {
+                this.managerAuthLoading = false;
+            }
         }
     }"
     @open-start-shift-modal.window="shiftModalOpen = true"
     @open-close-shift-modal.window="closeShiftModalOpen = true"
     @open-held-sales-modal.window="heldModalOpen = true"
+    @open-manager-modal.window="managerModalOpen = true; managerAuthError = ''; managerAuthSuccess = ''"
     @keydown.f2.window.prevent="document.getElementById('barcode_input').focus()"
     @keydown.f4.window.prevent="document.getElementById('member_search_input').focus()"
     @keydown.f6.window.prevent="document.getElementById('invoice_discount_box').focus()"
@@ -292,7 +348,7 @@
     @keydown.f9.window.prevent="document.getElementById('hold_form').submit()"
     @keydown.f10.window.prevent="if ({{ count($cart) }} > 0) submitQuickCashPay()"
     @keydown.f11.window.prevent="printLastReceipt()"
-    @keydown.escape.window="paymentModalOpen = false; memberModalOpen = false; heldModalOpen = false; shiftModalOpen = false; closeShiftModalOpen = false; shortcutsModalOpen = false"
+    @keydown.escape.window="paymentModalOpen = false; memberModalOpen = false; heldModalOpen = false; shiftModalOpen = false; closeShiftModalOpen = false; shortcutsModalOpen = false; managerModalOpen = false"
     >
 
         <!-- Flash messages -->
@@ -874,5 +930,64 @@
             </div>
         </div>
 
+        <!-- Branch Manager Password Authorization Modal -->
+        <div x-show="managerModalOpen" style="display: none;" class="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
+            <div class="flex items-center justify-center min-h-screen px-4">
+                <div @click="managerModalOpen = false" class="fixed inset-0 bg-gray-900 bg-opacity-60 backdrop-blur-xs"></div>
+                <div class="inline-block bg-white rounded-2xl shadow-2xl p-6 z-10 w-full max-w-md border border-amber-200">
+                    <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center font-black">
+                                🔑
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-black text-gray-900">Branch Manager Authorization</h3>
+                                <p class="text-[11px] text-gray-500">Authorized for {{ Auth::user()->branch?->name ?? 'Active Branch' }}</p>
+                            </div>
+                        </div>
+                        <button @click="managerModalOpen = false" class="text-gray-400 hover:text-gray-600 font-bold">&times;</button>
+                    </div>
+
+                    <div x-show="managerAuthError" class="mt-3 p-3 bg-red-50 border-l-4 border-red-500 text-red-700 text-xs font-semibold rounded-r">
+                        <span x-text="managerAuthError"></span>
+                    </div>
+
+                    <div x-show="managerAuthSuccess" class="mt-3 p-3 bg-emerald-50 border-l-4 border-emerald-500 text-emerald-800 text-xs font-bold rounded-r">
+                        <span x-text="managerAuthSuccess"></span>
+                    </div>
+
+                    <form @submit.prevent="submitManagerAuth()" class="mt-4 space-y-3">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Authorization Purpose</label>
+                            <select x-model="managerAction" class="w-full text-xs font-semibold rounded-lg border-gray-300">
+                                <option value="backoffice">Unlock Full Back-Office &amp; Dashboard (15 Mins)</option>
+                                <option value="discount_override">Manual Discount / Price Override</option>
+                                <option value="void_order">Void Entire Current Cart</option>
+                                <option value="stock_transfer">Initiate Stock Transfer</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Branch Manager Email (Optional)</label>
+                            <input type="email" x-model="managerEmail" placeholder="e.g. manager@onestop.com (leave blank for any outlet manager)" class="w-full text-xs rounded-lg border-gray-300">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Manager Password *</label>
+                            <input type="password" x-model="managerPassword" placeholder="Enter Branch Manager Password" class="w-full text-sm font-bold rounded-lg border-gray-300 focus:ring-amber-500 focus:border-amber-500" required autofocus>
+                        </div>
+
+                        <div class="pt-2 flex justify-end gap-2">
+                            <button type="button" @click="managerModalOpen = false" class="px-4 py-2 border border-gray-300 text-gray-700 text-xs font-bold rounded-lg hover:bg-gray-50">Cancel</button>
+                            <button type="submit" :disabled="managerAuthLoading" class="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg shadow-sm transition flex items-center gap-1.5">
+                                <span x-text="managerAuthLoading ? 'Verifying...' : 'Authorize Action'"></span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
     </div>
 </x-app-layout>
+
