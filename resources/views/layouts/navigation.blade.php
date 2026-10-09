@@ -187,8 +187,11 @@
                     </x-slot>
 
                     <x-slot name="content">
-                        <x-dropdown-link :href="route('profile.edit')">
-                            {{ __('My Profile') }}
+                        <x-dropdown-link :href="route('profile.edit', ['tab' => 'dashboard'])">
+                            {{ __('My Profile & Dashboard') }}
+                        </x-dropdown-link>
+                        <x-dropdown-link :href="route('profile.edit', ['tab' => 'history'])">
+                            {{ __('My Sales History') }}
                         </x-dropdown-link>
 
                         @if (Auth::user()->isSuperAdmin() || Auth::user()->hasRole('admin') || $isManagerOverridden)
@@ -246,6 +249,8 @@
 
         <a href="{{ route('pos.index') }}" class="block px-3 py-2 rounded-md text-sm font-bold text-emerald-600 hover:bg-emerald-50">POS Terminal</a>
         <a href="{{ route('shifts.index') }}" class="block px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">Cashier Shifts</a>
+        <a href="{{ route('profile.edit', ['tab' => 'dashboard']) }}" class="block px-3 py-2 rounded-md text-sm font-medium text-indigo-700 hover:bg-indigo-50">My Profile &amp; Dashboard</a>
+        <a href="{{ route('profile.edit', ['tab' => 'history']) }}" class="block px-3 py-2 rounded-md text-sm font-medium text-indigo-700 hover:bg-indigo-50">My Sales History</a>
 
         @if (!$isCashier || $isManagerOverridden)
             <a href="{{ route('dashboard') }}" class="block px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">Dashboard</a>
