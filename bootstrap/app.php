@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/openssl_polyfill.php';
+
 use App\Http\Middleware\CheckRole;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
